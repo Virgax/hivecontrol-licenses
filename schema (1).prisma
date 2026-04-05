@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  password     String
+  name         String
+  role         Role      @default(CLIENT)
+  createdAt    DateTime  @default(now())
+  licenses     License[]
+}
+
+model License {
+  id           String        @id @default(uuid())
+  key          String        @unique @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  plan         Plan          @default(MONTHLY)
+  months       Int           @default(1)
+  deviceLimit  Int           @default(10)
+  startDate    DateTime      @default(now())
+  expiresAt    DateTime
+  status       LicenseStatus @default(ACTIVE)
+  notes        String?
+  createdAt    DateTime      @default(now())
+  activations  Activation[]
+}
+
+model Activation {
+  id          String   @id @default(uuid())
+  licenseId   String
+  license     License  @relation(fields: [licenseId], references: [id])
+  machineId   String
+  machineName String?
+  ip          String?
+  activatedAt DateTime @default(now())
+  lastSeen    DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum Plan {
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+  CUSTOM
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  CANCELLED
+}
